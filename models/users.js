@@ -6,7 +6,8 @@ let userSchema = new Schema(
 		name: { type: String, required: true },
 		email: { type: String, required: true },
 		userTodos: [{ type: Schema.Types.ObjectId, ref: "Todo" }],
-		password: { type: String, required: true }
+		password: { type: String, required: true },
+		fb_id: String
 	},
 	{
 		timestamps: {

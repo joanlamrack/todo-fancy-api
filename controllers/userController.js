@@ -28,8 +28,63 @@ class UserController {
 			);
 	}
 
-	static FBlogin(req,res){
-		
+	static fbLogin(req, res) {
+		//console.log("entered FB login", req.body);
+		let { accessToken, userID } = req.body;
+		AuthHelper.getFacebookCredential(accessToken)
+			.then(result => {
+				result = JSON.parse(result);
+				//console.log(result);
+				User.findOne({ email: result.email })
+					.then(userFound => {
+						if (userFound) {
+							res.status(200).json({
+								message: "login success",
+								token: AuthHelper.createToken({ id: userFound._id.valueOf() })
+							});
+						} else {
+							return User.create({
+								email: result.email,
+								name: result.name,
+								fb_id: userID,
+								password: AuthHelper.createHashPass(result.email + "12345678")
+							});
+						}
+					})
+					.then(newUser => {
+						res.status(200).json({
+							message: "New User created",
+							token: AuthHelper.createToken({ id: newUser._id.toString() })
+						});
+					})
+					.catch(err => {
+						res.status(400).json(err);
+					});
+			})
+			.catch(err => {
+				res.status(400).json(err);
+			});
+	}
+
+	static verifyToken(req, res) {
+		let id = AuthHelper.decodeToken(req.body.token).id;
+		User.findById(ObjectId(id))
+			.then(userFound => {
+				if (userFound) {
+					res.status(200).json({
+						message: "OK"
+					});
+				} else {
+					res.status(204).json({
+						message: "NK"
+					});
+				}
+			})
+			.catch(err => {
+				res.status(400).json({
+					message: err
+				});
+			});
 	}
 
 	static login(req, res) {
@@ -44,12 +99,12 @@ class UserController {
 						id: user._id.toString()
 					});
 					res.status(200).json({
-						message:"Login Success",
-						token:token
+						message: "Login Success",
+						token: token
 					});
 				} else {
 					res.status(404).json({
-						message:"Login not success"
+						message: "Login not success"
 					});
 				}
 			})
@@ -95,8 +150,8 @@ class UserController {
 			});
 	}
 
-	static updatebyUpdate(req, res) {
-		User.findOneAndUpdate({ _id: ObjectId(req.params.userId) })
+	static updatebyId(req, res) {
+		User.findOneAndUpdate({ _id: ObjectId(req.params.userId) }, req.body)
 			.exec()
 			.then(result => {
 				res.status(200).json({
