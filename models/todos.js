@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 let Schema = mongoose.Schema;
 
-let todoSchema = new Schema(
+let TodoSchema = new Schema(
 	{
 		title: { type: String, required: true },
 		deadline: { type: Date, required: true },
@@ -16,4 +16,16 @@ let todoSchema = new Schema(
 	}
 );
 
-module.exports = mongoose.model("Todo", todoSchema);
+TodoSchema.pre("remove", function(next) {
+	let todo = this;
+	todo
+		.model("User")
+		.update(
+			{ userTodos: todo._id },
+			{ $pull: { userTodos: 1 } },
+			{ multi: true },
+			next
+		);
+});
+
+module.exports = mongoose.model("Todo", TodoSchema);

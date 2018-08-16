@@ -2,15 +2,19 @@ require("dotenv").config();
 const cors = require('cors')
 const express = require("express");
 const logger = require("morgan");
-const routes = require("./routes/index");
 const app = express();
 const mongoose = require("mongoose");
+const routes = require("./routes/index");
+
+
 //Set db disini
 
-let mongoDB = "mongodb://127.0.0.1:27017/usertodo";
+let mongoDB = `mongodb://${process.env.MONGODBHOST}:${process.env.MONGOPORT}/usertodo`;
 mongoose.connect(mongoDB,{ useNewUrlParser: true });
 let db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error"));
+
+
 
 app.use(cors());
 app.use(logger("dev"));

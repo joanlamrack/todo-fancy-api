@@ -68,6 +68,7 @@ class TodoController {
 
 	static getOneById(req, res) {
 		Todo.findById(ObjectId(req.params.todoId))
+			.exec()
 			.then(todo => {
 				if (todo) {
 					res.status(200).json({
@@ -88,9 +89,43 @@ class TodoController {
 			});
 	}
 
-	static deleteById() {}
+	//pasang middleware buat check apakah object id ini ada di dalam referensi user
+	static deleteById(req, res) {
+		Todo.deleteById(ObjectId(req.params.userId))
+			.exec()
+			.then(deleteResponse => {
+				res.status(200).json({
+					message: "User successully deleted",
+					data: deleteResponse
+				});
+			})
+			.catch(err => {
+				res.status(400).json({
+					message: err.message,
+					data: err
+				});
+			});
+	}
 
-	static update() {}
+	static updatebyId(req, res) {
+		Todo.findByIdAndUpdate(
+			{ _id: ObjectId(req.params.todoId) },
+			{ changes: req.body.changes }
+		)
+			.exec()
+			.then(response => {
+				res.status(200).json({
+					message: "To do Successfully created",
+					data:response
+				});
+			})
+			.catch(err=>{
+				res.status(400).json({
+					message:err.message,
+					data:err
+				})
+			});
+	}
 }
 
 module.exports = TodoController;
