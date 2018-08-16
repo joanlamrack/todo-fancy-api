@@ -9,7 +9,7 @@ const routes = require("./routes/index");
 
 //Set db disini
 
-let mongoDB = `mongodb://${process.env.MONGODBHOST}:${process.env.MONGOPORT}/usertodo`;
+let mongoDB = `mongodb://${process.env.USERNAMEDB}:${process.env.PASSWORD}@${process.env.MONGODBHOST}:${process.env.MONGOPORT}/todofancy`;
 mongoose.connect(mongoDB,{ useNewUrlParser: true });
 let db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error"));
