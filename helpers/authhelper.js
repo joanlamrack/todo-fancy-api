@@ -7,7 +7,6 @@ class authHelpers {
 	constructor() {}
 
 	static createToken(tokenInfoObj) {
-		console.log(daKey);
 		return jwt.sign(tokenInfoObj, daKey, {
 			expiresIn: 86400 // expires in 24 hours
 		});
@@ -30,7 +29,6 @@ class authHelpers {
 	}
 
 	static getIdFromToken(token) {
-		console.log("id",authHelpers.decodeToken(token).id);
 		return authHelpers.decodeToken(token).id;
 	}
 
@@ -40,6 +38,10 @@ class authHelpers {
 
 	static getFacebookCredential(accessToken){
 		return request.get(`https://graph.facebook.com/me?fields=id,name,email&access_token=${accessToken}`);
+	}
+
+	static getRandomPassword(){
+		return request.get("https://www.passwordrandom.com/query?command=password");
 	}
 }
 

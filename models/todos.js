@@ -4,8 +4,8 @@ let Schema = mongoose.Schema;
 let TodoSchema = new Schema(
 	{
 		title: { type: String, required: true },
-		deadline: { type: Date, required: true },
-		priority: { type: String, enum: ["None", "Low", "Medium", "High"] },
+		deadline: { type: Date, required: true, default: new Date()},
+		priority: { type: String, enum: ["None", "Low", "Medium", "High"], default:"None" },
 		notes: { type: String, required: true }
 	},
 	{

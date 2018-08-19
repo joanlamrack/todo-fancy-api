@@ -6,7 +6,7 @@ class TodoController {
 	constructor() {}
 
 	static create(req, res) {
-		User.findById(ObjectId(req.params.userId))
+		User.findById(req.headers.userId)
 			.exec()
 			.then(userFound => {
 				if (userFound) {
@@ -18,6 +18,7 @@ class TodoController {
 					})
 						.then(todoCreated => {
 							userFound.userTodos.push(todoCreated._id);
+							userFound.save();
 							res.status(200).json({
 								message: "todo successfully created",
 								data: todoCreated
@@ -44,17 +45,17 @@ class TodoController {
 	}
 
 	static getAllTaskByUserId(req, res) {
-		User.findById(ObjectId(req.params.userId))
+		User.findById(ObjectId(req.headers.userId))
 			.populate("userTodos")
 			.then(userFound => {
-				if (userFound) {
+				if (userFound && userFound.userTodos.length) {
 					res.status(200).json({
-						message: "User Found",
-						data: userFound
+						message: "Todo Found",
+						data: userFound.userTodos
 					});
 				} else {
 					res.status(404).json({
-						message: "User not found"
+						message: "Todo empty"
 					});
 				}
 			})
@@ -91,12 +92,18 @@ class TodoController {
 
 	//pasang middleware buat check apakah object id ini ada di dalam referensi user
 	static deleteById(req, res) {
-		Todo.deleteById(ObjectId(req.params.userId))
+		//delete referensi di user dulu
+		User.findByIdAndUpdate(req.headers.userId, {
+			$pull: { userTodos: { $in: ObjectId(req.params.todoId) } }
+		})
 			.exec()
 			.then(deleteResponse => {
+				res.json(deleteResponse);
+				///return Todo.findByIdAndRemove(ObjectId(req.params.todoId));
+			})
+			.then(response => {
 				res.status(200).json({
-					message: "User successully deleted",
-					data: deleteResponse
+					message: "Todo Deleted"
 				});
 			})
 			.catch(err => {
@@ -108,22 +115,37 @@ class TodoController {
 	}
 
 	static updatebyId(req, res) {
+		// console.log(req.body);
+		// console.log(req.params);
+		let changes = {
+			title: req.body.title,
+			deadline: new Date(req.body.deadline) || undefined,
+			priority: req.body.priority,
+			notes: req.body.notes
+		};
+
+		for(let key in changes){
+			if(!changes[key] || !changes[key].length) {
+				delete changes[key];
+			}
+		}
+
+		// console.log("Changes, to be submitted", changes);
 		Todo.findByIdAndUpdate(
 			{ _id: ObjectId(req.params.todoId) },
-			{ changes: req.body.changes }
+			changes,
+			{ runValidators: true }
 		)
-			.exec()
 			.then(response => {
 				res.status(200).json({
-					message: "To do Successfully created",
-					data:response
+					message: "To do Successfully Updated"
 				});
 			})
-			.catch(err=>{
+			.catch(err => {
 				res.status(400).json({
-					message:err.message,
-					data:err
-				})
+					message: err.message,
+					data: err
+				});
 			});
 	}
 }

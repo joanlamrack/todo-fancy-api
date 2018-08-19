@@ -1,7 +1,7 @@
 const User = require("../models/users");
 const AuthHelper = require("../helpers/authhelper");
 const ObjectId = require("mongoose").Types.ObjectId;
-
+const Todo = require("../models/users");
 class UserController {
 	constructor() {}
 
@@ -31,31 +31,41 @@ class UserController {
 	static fbLogin(req, res) {
 		//console.log("entered FB login", req.body);
 		let { accessToken, userID } = req.body;
-		AuthHelper.getFacebookCredential(accessToken)
-			.then(result => {
-				result = JSON.parse(result);
-				//console.log(result);
-				User.findOne({ email: result.email })
-					.then(userFound => {
-						if (userFound) {
-							res.status(200).json({
-								message: "login success",
-								token: AuthHelper.createToken({ id: userFound._id.valueOf() })
+		AuthHelper.getRandomPassword()
+			.then(randomPass => {
+				AuthHelper.getFacebookCredential(accessToken)
+					.then(result => {
+						result = JSON.parse(result);
+						User.findOne({ email: result.email })
+							.then(userFound => {
+								if (userFound) {
+									res.status(200).json({
+										message: "login success",
+										token: AuthHelper.createToken({
+											id: userFound._id.valueOf()
+										})
+									});
+								} else {
+									return User.create({
+										email: result.email,
+										name: result.name,
+										fb_id: userID,
+										password: AuthHelper.createHashPass(
+											result.email + randomPass
+										)
+									});
+								}
+							})
+							.then(newUser => {
+								res.status(200).json({
+									message: "New User created",
+									password: randomPass,
+									token: AuthHelper.createToken({ id: newUser._id.toString() })
+								});
+							})
+							.catch(err => {
+								res.status(400).json(err);
 							});
-						} else {
-							return User.create({
-								email: result.email,
-								name: result.name,
-								fb_id: userID,
-								password: AuthHelper.createHashPass(result.email + "12345678")
-							});
-						}
-					})
-					.then(newUser => {
-						res.status(200).json({
-							message: "New User created",
-							token: AuthHelper.createToken({ id: newUser._id.toString() })
-						});
 					})
 					.catch(err => {
 						res.status(400).json(err);
@@ -72,7 +82,10 @@ class UserController {
 			.then(userFound => {
 				if (userFound) {
 					res.status(200).json({
-						message: "OK"
+						message: "OK",
+						data: {
+							name: userFound.name
+						}
 					});
 				} else {
 					res.status(204).json({
@@ -120,8 +133,8 @@ class UserController {
 	}
 
 	static getOneById(req, res) {
-		User.getOneById(req.params.userId)
-			.exec()
+		User.findById(req.headers.userId)
+			.populate("userTodos")
 			.then(result => {
 				res.status(200).json({
 					message: "success",
@@ -137,8 +150,19 @@ class UserController {
 	}
 
 	static deleteById(req, res) {
-		User.deleteById(req.params.userId)
-			.exec()
+		User.findById(req.headers.userId)
+			.then(userFound => {
+				if (userFound) {
+					return Todo.remove({ _id: { $in: userFound.userTodos } });
+				} else {
+					res.status(404).json({
+						message: "User not found"
+					});
+				}
+			})
+			.then(response => {
+				return User.deleteOne({ _id: ObjectId(req.headers.userId) });
+			})
 			.then(result => {
 				res.status(200).json({
 					message: "success",
@@ -154,7 +178,10 @@ class UserController {
 	}
 
 	static updatebyId(req, res) {
-		User.findOneAndUpdate({ _id: ObjectId(req.params.userId) }, req.body)
+		let password = AuthHelper.createHashPass(
+			req.headers.email + req.body.password
+		);
+		User.findOneAndUpdate({ _id: ObjectId(req.headers.userId) }, { password })
 			.exec()
 			.then(result => {
 				res.status(200).json({

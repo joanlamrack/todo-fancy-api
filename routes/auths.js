@@ -10,7 +10,7 @@ router
 	});
 
 router.post("/signup", userController.create);
-
-router.post("/login", userController.login)
+router.post("/verifytoken", userController.verifyToken);
+router.post("/login", userController.login);
 
 module.exports = router;
