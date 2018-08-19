@@ -1,25 +1,30 @@
 require("dotenv").config();
-const cors = require('cors')
+const cors = require("cors");
 const express = require("express");
 const logger = require("morgan");
 const app = express();
 const mongoose = require("mongoose");
 const routes = require("./routes/index");
 
-
 //Set db disini
 
-let mongoDB = `mongodb://${process.env.USERNAMEDB}:${process.env.PASSWORD}@${process.env.MONGODBHOST}:${process.env.MONGOPORT}/todofancy`;
-mongoose.connect(mongoDB,{ useNewUrlParser: true });
+let mongoDB = `mongodb://${process.env.USERNAMEDB}:${process.env.PASSWORD}@${
+	process.env.MONGODBHOST
+}:${process.env.MONGOPORT}/todofancy`;
+mongoose.connect(
+	mongoDB,
+	{ useNewUrlParser: true }
+);
 let db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error"));
-
-
+db.once("open", function() {
+	console.log("MongoDB Connected!");
+});
 
 app.use(cors());
 app.use(logger("dev"));
 app.use(express.json());
-app.use(express.urlencoded({ extended:true }));
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/", routes);
 
@@ -53,7 +58,7 @@ app.use(function(err, req, res, next) {
 });
 
 app.listen(3000, () => {
-	console.log("connected!");
+	console.log("Express connected!");
 });
 
 module.exports = app;

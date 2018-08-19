@@ -1,8 +1,16 @@
 let express = require("express");
 let router = express.Router();
-let userController =  
+let userController = require("../controllers/userController");
 
 //Norma
-router.post()
+router
+	.route("/")
+	.get(function(req, res) {
+		res.send("This is auth");
+	});
+
+router.post("/signup", userController.create);
+
+router.post("/login", userController.login)
 
 module.exports = router;

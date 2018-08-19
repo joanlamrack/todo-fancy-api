@@ -16,7 +16,7 @@ class UserController {
 		})
 			.then(result =>
 				res.status(200).json({
-					message: "sucess",
+					message: "success",
 					data: result
 				})
 			)
@@ -88,13 +88,16 @@ class UserController {
 	}
 
 	static login(req, res) {
-		let password = AuthHelper.createHashPass(
-			req.body.email + req.body.password
-		);
-		User.findOne({ email: req.body.email, password: password })
+		User.findOne({ email: req.body.email })
 			.exec()
 			.then(user => {
-				if (user) {
+				if (
+					user &&
+					AuthHelper.compareSync(
+						req.body.email + req.body.password,
+						user.password
+					)
+				) {
 					let token = AuthHelper.createToken({
 						id: user._id.toString()
 					});
@@ -104,7 +107,7 @@ class UserController {
 					});
 				} else {
 					res.status(404).json({
-						message: "Login not success"
+						message: "Wrong Email or Password"
 					});
 				}
 			})
